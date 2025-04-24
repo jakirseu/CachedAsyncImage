@@ -37,6 +37,20 @@ public struct CachedAsyncImage<Content: View>: View {
         Group {
             if let image = image {
                 content(image)
+            } else if let url = url {
+                let request = URLRequest(url: url)
+                if let cachedResponse = URLCache.shared.cachedResponse(for: request),
+                    let cachedImage = UIImage(data: cachedResponse.data)
+                {
+                    content(Image(uiImage: cachedImage))
+                } else {
+                    placeholder()
+                        .onAppear {
+                            Task {
+                                await loadImage()
+                            }
+                        }
+                }
             } else {
                 placeholder()
                     .onAppear {
